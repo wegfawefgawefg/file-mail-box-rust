@@ -1,22 +1,12 @@
 /*
-open a port and wait to receive data
-when data is received, convert it to a string and print it
-
-the program has two modes,
-passive listener mode, and sender mode
-the mode will be determined by the command line arguments
+as listener: read in bytes, then write to file, and go back to waiting for more connections
+as sender: open a file, read in bytes, send to listener, then close connection on completion
 */
 
 use clap::Parser;
 use std::io::prelude::*;
 use std::net::{TcpListener, TcpStream};
 
-// parse the command line arguments
-//  -p, --port <port>    port to listen on or connect to
-//  -s, --send <ip>      ip address to send data to
-//  -h, --help           Prints help information
-//  -V, --version        Prints version information
-//  -l, --listen         listen for incoming connections
 #[derive(Parser)]
 #[command(name = "file-mail-box")]
 #[command(version = "0.1.0")]
@@ -76,7 +66,6 @@ fn main() {
 }
 
 fn handle_client(mut stream: TcpStream) {
-    // let mut total_num_bytes_received = 0;
     loop {
         let mut buffer = [0; 512];
         let num_bytes_received = stream.read(&mut buffer).unwrap();
