@@ -30,7 +30,7 @@ fn main() {
     }
 }
 
-fn handle_listen_client(mut stream: TcpStream) {
+fn handle_listen_client(mut stream: TcpStream) -> usize {
     let mut total_num_bytes_received = 0;
     loop {
         let mut buffer = [0; 512];
@@ -44,6 +44,7 @@ fn handle_listen_client(mut stream: TcpStream) {
         //     println!("{}", String::from_utf8_lossy(&buffer[..]));
         // }
     }
+    return total_num_bytes_received;
 }
 
 fn listen(address: String) {
@@ -54,7 +55,10 @@ fn listen(address: String) {
             for stream in listener.incoming() {
                 match stream {
                     Ok(stream) => {
-                        handle_client(stream);
+                        let peer: String = format!("{}", stream.peer_addr().unwrap());
+                        println!("Connection established from {}", peer);
+                        let num_bytes_received = handle_listen_client(stream);
+                        println!("Received {} bytes from {}", num_bytes_received, peer);
                     }
                     Err(e) => {
                         println!("Error: {}", e);
