@@ -24,53 +24,73 @@ fn main() {
     let cli = Cli::parse();
     let address: String = format!("{}:{}", cli.address, cli.port);
     if cli.listen {
-        let listener = TcpListener::bind(&address).unwrap();
-        println!("Listening on {}", &address);
-
-        for stream in listener.incoming() {
-            match stream {
-                Ok(stream) => {
-                    handle_client(stream);
-                }
-                Err(e) => {
-                    println!("Error: {}", e);
-                }
-            }
-        }
+        listen(address);
     } else {
-        let stream = TcpStream::connect(&address);
-        match stream {
-            Ok(mut stream) => {
-                println!("Sending to {}", &address);
-                let mut total_bytes_sent = 0;
-                loop {
-                    let message = "dog";
-                    let sent = stream.write(message.as_bytes());
-                    match sent {
-                        Ok(num_bytes_sent) => {
-                            total_bytes_sent += num_bytes_sent;
-                        }
-                        Err(e) => {
-                            println!("total bytes sent: {}", total_bytes_sent);
-                            println!("Error: {}", e);
-                            break;
-                        }
+        send(address);
+    }
+}
+
+fn handle_listen_client(mut stream: TcpStream) {
+    let mut total_num_bytes_received = 0;
+    loop {
+        let mut buffer = [0; 512];
+        let num_bytes_received = stream.read(&mut buffer).unwrap();
+        total_num_bytes_received += num_bytes_received;
+        // quit on rcv 10 mb
+        if total_num_bytes_received > (usize::pow(1024, 2) * 10) {
+            break;
+        }
+        // if num_bytes_received > 0 {
+        //     println!("{}", String::from_utf8_lossy(&buffer[..]));
+        // }
+    }
+}
+
+fn listen(address: String) {
+    let listener = TcpListener::bind(&address);
+    match listener {
+        Ok(listener) => {
+            println!("Listening on {}", &address);
+            for stream in listener.incoming() {
+                match stream {
+                    Ok(stream) => {
+                        handle_client(stream);
+                    }
+                    Err(e) => {
+                        println!("Error: {}", e);
                     }
                 }
             }
-            Err(e) => {
-                println!("Error: {}", e);
-            }
+        }
+        Err(e) => {
+            println!("Error: {}", e);
         }
     }
 }
 
-fn handle_client(mut stream: TcpStream) {
-    loop {
-        let mut buffer = [0; 512];
-        let num_bytes_received = stream.read(&mut buffer).unwrap();
-        if num_bytes_received > 0 {
-            println!("{}", String::from_utf8_lossy(&buffer[..]));
+fn send(address: String) {
+    let stream = TcpStream::connect(&address);
+    match stream {
+        Ok(mut stream) => {
+            println!("Sending to {}", &address);
+            let mut total_bytes_sent = 0;
+            loop {
+                let message = "dog";
+                let sent = stream.write(message.as_bytes());
+                match sent {
+                    Ok(num_bytes_sent) => {
+                        total_bytes_sent += num_bytes_sent;
+                    }
+                    Err(e) => {
+                        println!("total bytes sent: {}", total_bytes_sent);
+                        println!("Error: {}", e);
+                        break;
+                    }
+                }
+            }
+        }
+        Err(e) => {
+            println!("Error: {}", e);
         }
     }
 }
